@@ -1,2 +1,3 @@
-# elk-sample-go-services
-Sample Go services to test the Elastic Stack
+# Elastic Stack Sample Go Services
+
+Sample Go services to test the Elastic Stack.
