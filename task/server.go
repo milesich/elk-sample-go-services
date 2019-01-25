@@ -7,6 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
+	"github.com/stratumn/elk-sample-go-services/store"
 )
 
 // Server is the http server for the Task service.
@@ -38,12 +39,12 @@ func (s *Server) Tasks(w http.ResponseWriter, _ *http.Request, ps httprouter.Par
 		return
 	}
 
-	tasks := []Task{
-		Task{
+	tasks := []store.Task{
+		store.Task{
 			ID:   1,
 			Name: "Do the laundry",
 		},
-		Task{
+		store.Task{
 			ID:   2,
 			Name: "Do the dishes",
 			Done: true,
@@ -67,7 +68,7 @@ func (s *Server) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	var task Task
+	var task store.Task
 	dec := json.NewDecoder(r.Body)
 	err = dec.Decode(&task)
 	if err != nil {
@@ -101,7 +102,7 @@ func (s *Server) UpdateTask(w http.ResponseWriter, r *http.Request, ps httproute
 		return
 	}
 
-	var task Task
+	var task store.Task
 	dec := json.NewDecoder(r.Body)
 	err = dec.Decode(&task)
 	if err != nil {

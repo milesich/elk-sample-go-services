@@ -1,4 +1,4 @@
-package user
+package store
 
 // User registered in the system.
 type User struct {

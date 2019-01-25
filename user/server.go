@@ -7,6 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
+	"github.com/stratumn/elk-sample-go-services/store"
 )
 
 // Server is the http server for the User service.
@@ -38,7 +39,7 @@ func (s *Server) User(w http.ResponseWriter, _ *http.Request, ps httprouter.Para
 		return
 	}
 
-	user, _ := json.Marshal(&User{
+	user, _ := json.Marshal(&store.User{
 		ID:   int(userID),
 		Name: "alice",
 	})
@@ -51,12 +52,12 @@ func (s *Server) User(w http.ResponseWriter, _ *http.Request, ps httprouter.Para
 func (s *Server) Users(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 	log.Info("GET users")
 
-	users := []User{
-		User{
+	users := []store.User{
+		store.User{
 			ID:   1,
 			Name: "alice",
 		},
-		User{
+		store.User{
 			ID:   2,
 			Name: "bob",
 		},
@@ -72,7 +73,7 @@ func (s *Server) Users(w http.ResponseWriter, _ *http.Request, _ httprouter.Para
 func (s *Server) AddUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	log.Info("POST users")
 
-	var user User
+	var user store.User
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&user)
 	if err != nil {

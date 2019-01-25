@@ -1,4 +1,4 @@
-package task
+package store
 
 // Task that a user wants to accomplish.
 type Task struct {
