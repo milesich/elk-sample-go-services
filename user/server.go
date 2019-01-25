@@ -13,12 +13,15 @@ import (
 // Server is the http server for the User service.
 type Server struct {
 	router *httprouter.Router
+	db     *store.Store
 }
 
 // Start the user service.
-func Start() {
+func Start(connStr string) {
+	db := store.New(connStr)
 	router := httprouter.New()
-	server := &Server{router: router}
+
+	server := &Server{router: router, db: db}
 
 	router.GET("/user/:id", server.User)
 	router.GET("/users", server.Users)
@@ -29,7 +32,7 @@ func Start() {
 }
 
 // User returns the user with the given id.
-func (s *Server) User(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
+func (s *Server) User(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Infof("GET user %s", ps.ByName("id"))
 
 	userID, err := strconv.ParseInt(ps.ByName("id"), 0, 0)
@@ -39,28 +42,28 @@ func (s *Server) User(w http.ResponseWriter, _ *http.Request, ps httprouter.Para
 		return
 	}
 
-	user, _ := json.Marshal(&store.User{
-		ID:   int(userID),
-		Name: "alice",
-	})
+	user, err := s.db.GetUser(r.Context(), int(userID))
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	b, _ := json.Marshal(user)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(user)
+	w.Write(b)
 }
 
 // Users returns the list of all users.
-func (s *Server) Users(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+func (s *Server) Users(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	log.Info("GET users")
 
-	users := []store.User{
-		store.User{
-			ID:   1,
-			Name: "alice",
-		},
-		store.User{
-			ID:   2,
-			Name: "bob",
-		},
+	users, err := s.db.GetUsers(r.Context())
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	b, _ := json.Marshal(users)
@@ -73,16 +76,22 @@ func (s *Server) Users(w http.ResponseWriter, _ *http.Request, _ httprouter.Para
 func (s *Server) AddUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	log.Info("POST users")
 
-	var user store.User
+	var input store.User
 	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(&user)
+	err := dec.Decode(&input)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	user.ID = 42
+	user, err := s.db.AddUser(r.Context(), input.Name)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	b, _ := json.Marshal(user)
 
 	w.Header().Set("Content-Type", "application/json")

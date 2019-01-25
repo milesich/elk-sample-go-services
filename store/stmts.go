@@ -5,11 +5,11 @@ package store
 const (
 	SQLCreateSchema    = `CREATE SCHEMA IF NOT EXISTS elk`
 	SQLCreateUserTable = `CREATE TABLE IF NOT EXISTS elk.users (
-		id integer PRIMARY KEY,
+		id SERIAL PRIMARY KEY,
 		name text NOT NULL
 	)`
 	SQLCreateTaskTable = `CREATE TABLE IF NOT EXISTS elk.tasks (
-		id integer PRIMARY KEY,
+		id SERIAL PRIMARY KEY,
 		user_id integer REFERENCES elk.users (id),
 		name text NOT NULL,
 		done boolean NOT NULL
