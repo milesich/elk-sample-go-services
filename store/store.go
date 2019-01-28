@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	// PQ is needed to interact with postgres.
 	_ "github.com/lib/pq"
@@ -25,24 +26,41 @@ type Store struct {
 
 // New connects to the database and makes sure it's setup.
 func New(connStr string) *Store {
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		log.WithError(err).Fatal("Could not connect to DB")
+	var err error
+	var db *sql.DB
+
+	log.Infof("Setting up database (%s)...", connStr)
+
+	for i := 0; i < 12; i++ {
+		<-time.After(5 * time.Second)
+
+		db, err = sql.Open("postgres", connStr)
+		if err != nil {
+			log.Errorf("Can't connect to DB: %s", err.Error())
+			continue
+		}
+
+		_, err = db.Exec(SQLCreateSchema)
+		if err != nil {
+			log.Errorf("Can't create DB schema: %s", err.Error())
+			continue
+		}
+
+		_, err = db.Exec(SQLCreateUserTable)
+		if err != nil {
+			log.Errorf("Can't create user table: %s", err.Error())
+			continue
+		}
+
+		_, err = db.Exec(SQLCreateTaskTable)
+		if err != nil {
+			log.Errorf("Can't create task table: %s", err.Error())
+			continue
+		}
 	}
 
-	_, err = db.Exec(SQLCreateSchema)
 	if err != nil {
-		log.WithError(err).Fatal("Could not create schema")
-	}
-
-	_, err = db.Exec(SQLCreateUserTable)
-	if err != nil {
-		log.WithError(err).Fatal("Could not create user table")
-	}
-
-	_, err = db.Exec(SQLCreateTaskTable)
-	if err != nil {
-		log.WithError(err).Fatal("Could not create task table")
+		log.Fatal("Database setup failed.")
 	}
 
 	s := &Store{db: db}
