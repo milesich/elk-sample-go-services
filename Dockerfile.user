@@ -1,0 +1,6 @@
+FROM alpine
+
+COPY ./build/user-svc /usr/bin
+
+EXPOSE 8080
+CMD ["/usr/bin/user-svc"]

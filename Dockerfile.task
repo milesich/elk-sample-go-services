@@ -1,0 +1,6 @@
+FROM alpine
+
+COPY ./build/task-svc /usr/bin
+
+EXPOSE 8080
+CMD ["/usr/bin/task-svc"]
