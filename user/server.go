@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -17,8 +18,8 @@ type Server struct {
 }
 
 // Start the user service.
-func Start(connStr string) {
-	db := store.New(connStr)
+func Start(port int, dbURL string) {
+	db := store.New(dbURL)
 	router := httprouter.New()
 
 	server := &Server{router: router, db: db}
@@ -27,8 +28,8 @@ func Start(connStr string) {
 	router.GET("/users", server.Users)
 	router.POST("/users", server.AddUser)
 
-	log.Infof("Starting HTTP server on port %d", 4001)
-	log.Fatal(http.ListenAndServe(":4001", router))
+	log.Infof("Starting HTTP server on port %d", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }
 
 // User returns the user with the given id.

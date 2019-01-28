@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -17,8 +18,8 @@ type Server struct {
 }
 
 // Start the task service.
-func Start(connStr string) {
-	db := store.New(connStr)
+func Start(port int, dbURL string) {
+	db := store.New(dbURL)
 	router := httprouter.New()
 
 	server := &Server{router: router, db: db}
@@ -27,8 +28,8 @@ func Start(connStr string) {
 	router.POST("/user/:userId/tasks", server.AddTask)
 	router.POST("/user/:userId/task/:taskId", server.UpdateTask)
 
-	log.Infof("Starting HTTP server on port %d", 4002)
-	log.Fatal(http.ListenAndServe(":4002", router))
+	log.Infof("Starting HTTP server on port %d", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }
 
 // Tasks returns the user's tasks.
