@@ -10,9 +10,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stratumn/elk-sample-go-services/store"
 
+	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
 	"go.elastic.co/apm/module/apmhttprouter"
-	"go.elastic.co/apm/module/apmlogrus"
 )
 
 // Server is the http server for the User service.
@@ -37,7 +37,10 @@ func Start(port int, dbURL string) {
 
 // User returns the user with the given id.
 func (s *Server) User(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.WithFields(apmlogrus.TraceContext(r.Context())).Infof("getting user %s", ps.ByName("id"))
+	span, ctx := apm.StartSpan(r.Context(), "server/user", "request")
+	defer span.End()
+
+	apm.TransactionFromContext(ctx).Context.SetUserID(ps.ByName("id"))
 
 	userID, err := strconv.ParseInt(ps.ByName("id"), 0, 0)
 	if err != nil {
@@ -46,12 +49,14 @@ func (s *Server) User(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		return
 	}
 
-	user, err := s.db.GetUser(r.Context(), int(userID))
+	user, err := s.db.GetUser(ctx, int(userID))
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	apm.TransactionFromContext(ctx).Context.SetUsername(user.Name)
 
 	b, _ := json.Marshal(user)
 
@@ -61,14 +66,17 @@ func (s *Server) User(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 // Users returns the list of all users.
 func (s *Server) Users(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	log.WithFields(apmlogrus.TraceContext(r.Context())).Info("getting users")
+	span, ctx := apm.StartSpan(r.Context(), "server/users", "request")
+	defer span.End()
 
-	users, err := s.db.GetUsers(r.Context())
+	users, err := s.db.GetUsers(ctx)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	apm.TransactionFromContext(ctx).Context.SetTag("userCount", fmt.Sprintf("%d", len(users)))
 
 	b, _ := json.Marshal(users)
 
@@ -78,7 +86,8 @@ func (s *Server) Users(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 
 // AddUser adds a new user.
 func (s *Server) AddUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	log.WithFields(apmlogrus.TraceContext(r.Context())).Info("creating user")
+	span, ctx := apm.StartSpan(r.Context(), "server/addUser", "request")
+	defer span.End()
 
 	var input store.User
 	dec := json.NewDecoder(r.Body)
@@ -89,12 +98,15 @@ func (s *Server) AddUser(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		return
 	}
 
-	user, err := s.db.AddUser(r.Context(), input.Name)
+	user, err := s.db.AddUser(ctx, input.Name)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	apm.TransactionFromContext(ctx).Context.SetUserID(fmt.Sprintf("%d", user.ID))
+	apm.TransactionFromContext(ctx).Context.SetUsername(user.Name)
 
 	b, _ := json.Marshal(user)
 

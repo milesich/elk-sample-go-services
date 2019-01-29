@@ -10,9 +10,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stratumn/elk-sample-go-services/store"
 
+	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
 	"go.elastic.co/apm/module/apmhttprouter"
-	"go.elastic.co/apm/module/apmlogrus"
 )
 
 // Server is the http server for the Task service.
@@ -37,7 +37,10 @@ func Start(port int, dbURL string) {
 
 // Tasks returns the user's tasks.
 func (s *Server) Tasks(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.WithFields(apmlogrus.TraceContext(r.Context())).Infof("getting user %s tasks", ps.ByName("userId"))
+	span, ctx := apm.StartSpan(r.Context(), "server/tasks", "request")
+	defer span.End()
+
+	apm.TransactionFromContext(ctx).Context.SetUserID(ps.ByName("userId"))
 
 	userID, err := strconv.ParseInt(ps.ByName("userId"), 0, 0)
 	if err != nil {
@@ -46,12 +49,14 @@ func (s *Server) Tasks(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		return
 	}
 
-	tasks, err := s.db.GetUserTasks(r.Context(), int(userID))
+	tasks, err := s.db.GetUserTasks(ctx, int(userID))
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	apm.TransactionFromContext(ctx).Context.SetTag("tasksCount", fmt.Sprintf("%d", len(tasks)))
 
 	b, _ := json.Marshal(tasks)
 
@@ -61,7 +66,10 @@ func (s *Server) Tasks(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 // AddTask adds a new task.
 func (s *Server) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.WithFields(apmlogrus.TraceContext(r.Context())).Infof("adding task to user %s", ps.ByName("userId"))
+	span, ctx := apm.StartSpan(r.Context(), "server/addTask", "request")
+	defer span.End()
+
+	apm.TransactionFromContext(ctx).Context.SetUserID(ps.ByName("userId"))
 
 	userID, err := strconv.ParseInt(ps.ByName("userId"), 0, 0)
 	if err != nil {
@@ -79,12 +87,14 @@ func (s *Server) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	task, err := s.db.AddTask(r.Context(), int(userID), input.Name)
+	task, err := s.db.AddTask(ctx, int(userID), input.Name)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	apm.TransactionFromContext(ctx).Context.SetTag("taskId", fmt.Sprintf("%d", task.ID))
 
 	b, _ := json.Marshal(task)
 
@@ -94,7 +104,11 @@ func (s *Server) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 // UpdateTask updates a given task.
 func (s *Server) UpdateTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.WithFields(apmlogrus.TraceContext(r.Context())).Infof("updating task %s for user %s", ps.ByName("taskId"), ps.ByName("userId"))
+	span, ctx := apm.StartSpan(r.Context(), "server/updateTask", "request")
+	defer span.End()
+
+	apm.TransactionFromContext(ctx).Context.SetUserID(ps.ByName("userId"))
+	apm.TransactionFromContext(ctx).Context.SetTag("taskId", ps.ByName("taskId"))
 
 	_, err := strconv.ParseInt(ps.ByName("userId"), 0, 0)
 	if err != nil {
@@ -119,7 +133,7 @@ func (s *Server) UpdateTask(w http.ResponseWriter, r *http.Request, ps httproute
 		return
 	}
 
-	task, err := s.db.UpdateTask(r.Context(), int(taskID), input.Name, input.Done)
+	task, err := s.db.UpdateTask(ctx, int(taskID), input.Name, input.Done)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
