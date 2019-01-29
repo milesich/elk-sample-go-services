@@ -9,6 +9,10 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"go.elastic.co/apm/module/apmsql"
+	// PQ drivers should be loaded for automatic instrumentation.
+	_ "go.elastic.co/apm/module/apmsql/pq"
 )
 
 // Store provides access to the data store.
@@ -34,7 +38,7 @@ func New(connStr string) *Store {
 	for i := 0; i < 12; i++ {
 		<-time.After(5 * time.Second)
 
-		db, err = sql.Open("postgres", connStr)
+		db, err = apmsql.Open("postgres", connStr)
 		if err != nil {
 			log.Errorf("Can't connect to DB: %s", err.Error())
 			continue
