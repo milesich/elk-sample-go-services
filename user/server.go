@@ -9,27 +9,29 @@ import (
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 	"github.com/stratumn/elk-sample-go-services/store"
+
+	"go.elastic.co/apm/module/apmhttp"
+	"go.elastic.co/apm/module/apmhttprouter"
 )
 
 // Server is the http server for the User service.
 type Server struct {
-	router *httprouter.Router
-	db     *store.Store
+	db *store.Store
 }
 
 // Start the user service.
 func Start(port int, dbURL string) {
 	db := store.New(dbURL)
-	router := httprouter.New()
+	router := apmhttprouter.New()
 
-	server := &Server{router: router, db: db}
+	server := &Server{db: db}
 
 	router.GET("/user/:id", server.User)
 	router.GET("/users", server.Users)
 	router.POST("/users", server.AddUser)
 
 	log.Infof("Starting HTTP server on port %d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), apmhttp.Wrap(router)))
 }
 
 // User returns the user with the given id.

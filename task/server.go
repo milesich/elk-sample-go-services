@@ -9,27 +9,29 @@ import (
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 	"github.com/stratumn/elk-sample-go-services/store"
+
+	"go.elastic.co/apm/module/apmhttp"
+	"go.elastic.co/apm/module/apmhttprouter"
 )
 
 // Server is the http server for the Task service.
 type Server struct {
-	router *httprouter.Router
-	db     *store.Store
+	db *store.Store
 }
 
 // Start the task service.
 func Start(port int, dbURL string) {
 	db := store.New(dbURL)
-	router := httprouter.New()
+	router := apmhttprouter.New()
 
-	server := &Server{router: router, db: db}
+	server := &Server{db: db}
 
 	router.GET("/user/:userId/tasks", server.Tasks)
 	router.POST("/user/:userId/tasks", server.AddTask)
 	router.POST("/user/:userId/task/:taskId", server.UpdateTask)
 
 	log.Infof("Starting HTTP server on port %d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), apmhttp.Wrap(router)))
 }
 
 // Tasks returns the user's tasks.
