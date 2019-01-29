@@ -105,6 +105,7 @@ func (s *Server) AddUser(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		return
 	}
 
+	userCount.Inc()
 	apm.TransactionFromContext(ctx).Context.SetUserID(fmt.Sprintf("%d", user.ID))
 	apm.TransactionFromContext(ctx).Context.SetUsername(user.Name)
 

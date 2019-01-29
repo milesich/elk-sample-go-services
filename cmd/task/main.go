@@ -4,10 +4,13 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/stratumn/elk-sample-go-services/task"
 
+	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmlogrus"
+	"go.elastic.co/apm/module/apmprometheus"
 )
 
 // Constants.
@@ -41,4 +44,10 @@ func main() {
 func init() {
 	// apmlogrus.Hook will send "error", "panic", and "fatal" level log messages to Elastic APM.
 	log.AddHook(&apmlogrus.Hook{})
+
+	// Plug the default prometheus gatherer to APM.
+	// This will export custom metrics regularly.
+	apm.DefaultTracer.RegisterMetricsGatherer(
+		apmprometheus.Wrap(prometheus.DefaultGatherer),
+	)
 }
