@@ -10,7 +10,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmsql"
+
 	// PQ drivers should be loaded for automatic instrumentation.
 	_ "go.elastic.co/apm/module/apmsql/pq"
 )
@@ -93,6 +95,9 @@ func (s *Store) prepare() {
 
 // AddUser to the DB.
 func (s *Store) AddUser(ctx context.Context, name string) (*User, error) {
+	span, ctx := apm.StartSpan(ctx, "store/AddUser", "app.store.query")
+	defer span.End()
+
 	var userID int
 
 	err := s.addUserStmt.QueryRowContext(ctx, name).Scan(&userID)
@@ -108,6 +113,9 @@ func (s *Store) AddUser(ctx context.Context, name string) (*User, error) {
 
 // GetUser from the DB.
 func (s *Store) GetUser(ctx context.Context, userID int) (*User, error) {
+	span, ctx := apm.StartSpan(ctx, "store/GetUser", "app.store.query")
+	defer span.End()
+
 	var ID int
 	var name string
 
@@ -124,6 +132,9 @@ func (s *Store) GetUser(ctx context.Context, userID int) (*User, error) {
 
 // GetUsers from the DB.
 func (s *Store) GetUsers(ctx context.Context) ([]*User, error) {
+	span, ctx := apm.StartSpan(ctx, "store/GetUsers", "app.store.query")
+	defer span.End()
+
 	rows, err := s.getUsersStmt.QueryContext(ctx)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -148,6 +159,9 @@ func (s *Store) GetUsers(ctx context.Context) ([]*User, error) {
 
 // AddTask to the DB.
 func (s *Store) AddTask(ctx context.Context, userID int, name string) (*Task, error) {
+	span, ctx := apm.StartSpan(ctx, "store/AddTask", "app.store.query")
+	defer span.End()
+
 	var taskID int
 
 	err := s.addTaskStmt.QueryRowContext(ctx, userID, name).Scan(&taskID)
@@ -164,6 +178,9 @@ func (s *Store) AddTask(ctx context.Context, userID int, name string) (*Task, er
 
 // UpdateTask updates a task in the DB.
 func (s *Store) UpdateTask(ctx context.Context, taskID int, name string, done bool) (*Task, error) {
+	span, ctx := apm.StartSpan(ctx, "store/UpdateTask", "app.store.query")
+	defer span.End()
+
 	_, err := s.updateTaskStmt.ExecContext(ctx, taskID, name, done)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -178,6 +195,9 @@ func (s *Store) UpdateTask(ctx context.Context, taskID int, name string, done bo
 
 // GetUserTasks gets all the tasks for the given user.
 func (s *Store) GetUserTasks(ctx context.Context, userID int) ([]*Task, error) {
+	span, ctx := apm.StartSpan(ctx, "store/GetUserTasks", "app.store.query")
+	defer span.End()
+
 	rows, err := s.getUserTasksStmt.QueryContext(ctx, userID)
 	if err != nil {
 		return nil, errors.WithStack(err)

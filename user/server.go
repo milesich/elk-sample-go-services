@@ -37,7 +37,7 @@ func Start(port int, dbURL string) {
 
 // User returns the user with the given id.
 func (s *Server) User(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	span, ctx := apm.StartSpan(r.Context(), "server/user", "request")
+	span, ctx := apm.StartSpan(r.Context(), "server/user", "app.request")
 	defer span.End()
 
 	apm.TransactionFromContext(ctx).Context.SetUserID(ps.ByName("id"))
@@ -66,7 +66,7 @@ func (s *Server) User(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 // Users returns the list of all users.
 func (s *Server) Users(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	span, ctx := apm.StartSpan(r.Context(), "server/users", "request")
+	span, ctx := apm.StartSpan(r.Context(), "server/users", "app.request")
 	defer span.End()
 
 	users, err := s.db.GetUsers(ctx)
@@ -86,7 +86,7 @@ func (s *Server) Users(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 
 // AddUser adds a new user.
 func (s *Server) AddUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	span, ctx := apm.StartSpan(r.Context(), "server/addUser", "request")
+	span, ctx := apm.StartSpan(r.Context(), "server/addUser", "app.request")
 	defer span.End()
 
 	var input store.User

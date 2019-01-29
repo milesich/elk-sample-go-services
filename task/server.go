@@ -38,7 +38,7 @@ func Start(port int, dbURL string) {
 
 // Tasks returns the user's tasks.
 func (s *Server) Tasks(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	span, ctx := apm.StartSpan(r.Context(), "server/tasks", "request")
+	span, ctx := apm.StartSpan(r.Context(), "server/tasks", "app.request")
 	defer span.End()
 
 	apm.TransactionFromContext(ctx).Context.SetUserID(ps.ByName("userId"))
@@ -67,7 +67,7 @@ func (s *Server) Tasks(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 // AddTask adds a new task.
 func (s *Server) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	span, ctx := apm.StartSpan(r.Context(), "server/addTask", "request")
+	span, ctx := apm.StartSpan(r.Context(), "server/addTask", "app.request")
 	defer span.End()
 
 	apm.TransactionFromContext(ctx).Context.SetUserID(ps.ByName("userId"))
@@ -108,7 +108,7 @@ func (s *Server) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 // UpdateTask updates a given task.
 func (s *Server) UpdateTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	span, ctx := apm.StartSpan(r.Context(), "server/updateTask", "request")
+	span, ctx := apm.StartSpan(r.Context(), "server/updateTask", "app.request")
 	defer span.End()
 
 	apm.TransactionFromContext(ctx).Context.SetUserID(ps.ByName("userId"))
