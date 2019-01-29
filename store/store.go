@@ -95,7 +95,7 @@ func (s *Store) prepare() {
 func (s *Store) AddUser(ctx context.Context, name string) (*User, error) {
 	var userID int
 
-	err := s.addUserStmt.QueryRow(name).Scan(&userID)
+	err := s.addUserStmt.QueryRowContext(ctx, name).Scan(&userID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -111,7 +111,7 @@ func (s *Store) GetUser(ctx context.Context, userID int) (*User, error) {
 	var ID int
 	var name string
 
-	err := s.getUserStmt.QueryRow(userID).Scan(&ID, &name)
+	err := s.getUserStmt.QueryRowContext(ctx, userID).Scan(&ID, &name)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -124,7 +124,7 @@ func (s *Store) GetUser(ctx context.Context, userID int) (*User, error) {
 
 // GetUsers from the DB.
 func (s *Store) GetUsers(ctx context.Context) ([]*User, error) {
-	rows, err := s.getUsersStmt.Query()
+	rows, err := s.getUsersStmt.QueryContext(ctx)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -150,7 +150,7 @@ func (s *Store) GetUsers(ctx context.Context) ([]*User, error) {
 func (s *Store) AddTask(ctx context.Context, userID int, name string) (*Task, error) {
 	var taskID int
 
-	err := s.addTaskStmt.QueryRow(userID, name).Scan(&taskID)
+	err := s.addTaskStmt.QueryRowContext(ctx, userID, name).Scan(&taskID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -164,7 +164,7 @@ func (s *Store) AddTask(ctx context.Context, userID int, name string) (*Task, er
 
 // UpdateTask updates a task in the DB.
 func (s *Store) UpdateTask(ctx context.Context, taskID int, name string, done bool) (*Task, error) {
-	_, err := s.updateTaskStmt.Exec(taskID, name, done)
+	_, err := s.updateTaskStmt.ExecContext(ctx, taskID, name, done)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -178,7 +178,7 @@ func (s *Store) UpdateTask(ctx context.Context, taskID int, name string, done bo
 
 // GetUserTasks gets all the tasks for the given user.
 func (s *Store) GetUserTasks(ctx context.Context, userID int) ([]*Task, error) {
-	rows, err := s.getUserTasksStmt.Query(userID)
+	rows, err := s.getUserTasksStmt.QueryContext(ctx, userID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
