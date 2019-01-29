@@ -12,6 +12,7 @@ import (
 
 	"go.elastic.co/apm/module/apmhttp"
 	"go.elastic.co/apm/module/apmhttprouter"
+	"go.elastic.co/apm/module/apmlogrus"
 )
 
 // Server is the http server for the Task service.
@@ -36,7 +37,7 @@ func Start(port int, dbURL string) {
 
 // Tasks returns the user's tasks.
 func (s *Server) Tasks(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.Infof("GET user %s tasks", ps.ByName("userId"))
+	log.WithFields(apmlogrus.TraceContext(r.Context())).Infof("getting user %s tasks", ps.ByName("userId"))
 
 	userID, err := strconv.ParseInt(ps.ByName("userId"), 0, 0)
 	if err != nil {
@@ -60,7 +61,7 @@ func (s *Server) Tasks(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 // AddTask adds a new task.
 func (s *Server) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.Infof("POST add task to user %s", ps.ByName("userId"))
+	log.WithFields(apmlogrus.TraceContext(r.Context())).Infof("adding task to user %s", ps.ByName("userId"))
 
 	userID, err := strconv.ParseInt(ps.ByName("userId"), 0, 0)
 	if err != nil {
@@ -93,7 +94,7 @@ func (s *Server) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 // UpdateTask updates a given task.
 func (s *Server) UpdateTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.Infof("POST update task %s for user %s", ps.ByName("taskId"), ps.ByName("userId"))
+	log.WithFields(apmlogrus.TraceContext(r.Context())).Infof("updating task %s for user %s", ps.ByName("taskId"), ps.ByName("userId"))
 
 	_, err := strconv.ParseInt(ps.ByName("userId"), 0, 0)
 	if err != nil {

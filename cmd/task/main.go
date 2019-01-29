@@ -6,6 +6,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stratumn/elk-sample-go-services/task"
+
+	"go.elastic.co/apm/module/apmlogrus"
 )
 
 // Constants.
@@ -34,4 +36,9 @@ func main() {
 	log.Info("Task service starting...")
 	task.Start(port, dbURL)
 	log.Info("Task service stopping...")
+}
+
+func init() {
+	// apmlogrus.Hook will send "error", "panic", and "fatal" level log messages to Elastic APM.
+	log.AddHook(&apmlogrus.Hook{})
 }

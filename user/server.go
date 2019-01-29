@@ -12,6 +12,7 @@ import (
 
 	"go.elastic.co/apm/module/apmhttp"
 	"go.elastic.co/apm/module/apmhttprouter"
+	"go.elastic.co/apm/module/apmlogrus"
 )
 
 // Server is the http server for the User service.
@@ -36,7 +37,7 @@ func Start(port int, dbURL string) {
 
 // User returns the user with the given id.
 func (s *Server) User(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.Infof("GET user %s", ps.ByName("id"))
+	log.WithFields(apmlogrus.TraceContext(r.Context())).Infof("getting user %s", ps.ByName("id"))
 
 	userID, err := strconv.ParseInt(ps.ByName("id"), 0, 0)
 	if err != nil {
@@ -60,7 +61,7 @@ func (s *Server) User(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 // Users returns the list of all users.
 func (s *Server) Users(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	log.Info("GET users")
+	log.WithFields(apmlogrus.TraceContext(r.Context())).Info("getting users")
 
 	users, err := s.db.GetUsers(r.Context())
 	if err != nil {
@@ -77,7 +78,7 @@ func (s *Server) Users(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 
 // AddUser adds a new user.
 func (s *Server) AddUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	log.Info("POST users")
+	log.WithFields(apmlogrus.TraceContext(r.Context())).Info("creating user")
 
 	var input store.User
 	dec := json.NewDecoder(r.Body)
