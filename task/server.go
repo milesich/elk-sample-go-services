@@ -96,8 +96,6 @@ func (s *Server) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	}
 
 	apm.TransactionFromContext(ctx).Context.SetTag("taskId", fmt.Sprintf("%d", task.ID))
-	// Unfortunately it looks like the prometheus label is lost when exporting
-	// to APM. Following up with the Elastic team.
 	taskCount.With(prometheus.Labels{"userId": ps.ByName("userId")}).Inc()
 
 	b, _ := json.Marshal(task)
